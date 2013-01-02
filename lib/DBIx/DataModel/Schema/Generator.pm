@@ -32,13 +32,14 @@ sub fromDBI {
   # may be called as ordinary sub or as method
   my $self = ref $_[0] eq __PACKAGE__ ? shift : __PACKAGE__->new(@ARGV);
 
-  my $dsn = shift or croak "missing arg (dsn for DBI->connect(..))";
-  my $user    = shift || "";
-  my $passwd  = shift || "";
-  my $options = shift || {RaiseError => 1};
-
-  my $dbh = DBI->connect($dsn, $user, $passwd, $options)
-    or croak "DBI->connect failed ($DBI::errstr)";
+  my $arg1    = shift or croak "missing arg (dsn for DBI->connect(..))";
+  my $dbh = (ref $arg1 && $arg1->isa('DBI::db')) ? $arg1 : do {
+    my $user    = shift || "";
+    my $passwd  = shift || "";
+    my $options = shift || {RaiseError => 1};
+    DBI->connect($arg1, $user, $passwd, $options)
+      or croak "DBI->connect failed ($DBI::errstr)";
+  };
 
   my %args 
     = (catalog => undef, schema => undef, table => undef, type => "TABLE");
