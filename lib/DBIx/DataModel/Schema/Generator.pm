@@ -374,16 +374,20 @@ sub _table2class{
 # and try to more sophisticated use Lingua::Inflect if module is installed
 my $to_S  = sub {(my $r = $_[0]) =~ s/s$//i; $r};
 my $to_PL = sub {$_[0] . "s"};
-eval "use Lingua::EN::Inflect::Number qw/to_S to_PL/;"
-   . "\$to_S = \\&to_S; \$to_PL = \\&to_PL;";
+eval "use Lingua::EN::Inflect::Phrase qw/to_S to_PL/;"
+   . "\$to_S = \\&to_S; \$to_PL = \\&to_PL;"
+  or warn "Lingua::EN::Inflect::Phrase is recommended; please install it to "
+        . "generate better names for associations";
+;
 
 # generate a rolename from a database table name
 sub _table2role{
   my ($tablename, $plural) = @_;
 
   my $inflect         = $plural ? $to_PL : $to_S;
-  my ($first, @other) = map {$inflect->($_)} split /[\W_]+/, lc $tablename;
-  my $role            = join '', $first, map ucfirst, @other;
+  # my ($first, @other) = map {$inflect->($_)} split /[\W_]+/, lc $tablename;
+  # my $role            = join '_', $first, @other;
+  my $role            = $inflect->(lc $tablename);
   return $role;
 }
 
@@ -480,7 +484,9 @@ a function (this function is exported by default).
 In the latter case, a generator is automatically 
 created by calling L<new> with arguments C<@ARGV>.
 
-DBI connection arguments are as in  L<DBI/connect>.
+The DBI connection arguments are as in  L<DBI/connect>.
+Alternatively, an already connected C<$dbh> can also be
+passed as argument to C<fromDBI()>.
 
 
 =head2 fromDBIxClass
@@ -509,7 +515,7 @@ Laurent Dami, E<lt>laurent.dami AT etat  ge  chE<gt>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Laurent Dami.
+Copyright 2008, 2012 Laurent Dami.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

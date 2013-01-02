@@ -1,3 +1,5 @@
+=encoding ISO8859-1
+
 =head1 NAME
 
 DBIx::DataModel::Doc::Reference - General reference for DBIx::DataModel
@@ -520,6 +522,19 @@ method returns a single object, otherwise it returns an arrayref)
 
 =back
 
+When the multiplicity is '*', a method named C<insert_into_...> is
+installed in the class of the other association end. This method
+create new objects of the associated class, taking care of the linking
+automatically. For example :
+
+  $an_employee->insert_into_activities({d_begin => $today,
+                                        dpt_id  => $dpt});
+
+This is equivalent to
+
+  $schema->table('Activity')->insert({d_begin => $today,
+                                      dpt_id  => $dpt,
+                                      emp_id  => $an_employee->{emp_id}});
 
 =item join_cols
 
@@ -596,6 +611,10 @@ directional paths between those sources.
 Only binary associations can be declared; however, it is possible
 to define methods joining three or more tables : see
 L</define_navigation_method()>.
+
+
+
+
 
 
 =head4 Special semantics for compositions
@@ -2398,7 +2417,7 @@ returns that column (so you can call C<< my $k = $obj->primary_key >>).
 
   $row->expand($path, %options);
 
-Executes the method C<< $role >> to follow an Association,
+Executes the method C<< $path >> to follow an Association,
 stores the result in the object itself under C<< $row->{$path} >>,
 and returns that result.
 This is typically used to expand an object into a tree datastructure.
@@ -2429,7 +2448,7 @@ with arguments, like C<< $row->some_path(-columns => '*') >>.
 Asks the object to expand itself with some objects in foreign tables.
 Does nothing by default. Should be redefined in subclasses,
 most probably through the 
-L</set_auto_expand> method.
+L</define_auto_expand> method.
 If the optional argument C<$with_recursion> is true, then 
 C<auto_expand> is recursively called on the expanded objects.
 
@@ -2765,10 +2784,12 @@ Keys are column names, values are insignificant.
   my %all_path      = $meta_source->path;
   my $specific_path = $meta_source->path($path_name);
 
-Returns a flattened hash, built from C<no_update_columns> declared
-in this source, in its ancestors, or in the C<$meta_schema>.
-If a C<$path_name>, returns the corresponding entry in 
-C<%all_path>.
+Without any argument, returns a flattened hash of all paths 
+accessible from this source : keys are path names, and
+values are instances of L<DBIx::DataModel::Meta::Path>.
+
+If a C<$path_name> is supplied, returns the corresponding 
+metapath object.
 
 =head3 db_from()
 
